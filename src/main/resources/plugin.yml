@@ -1,0 +1,14 @@
+name: SkyCombatLog
+version: '${version}'
+main: com.github.lukesky19.skycombatlog.SkyCombatLog
+api-version: '1.21'
+authors: [ lukeskywlker19 ]
+depend: [ SkyLib ]
+
+permissions:
+    skycombatlog.commands.skycombatlog:
+        description: The base command permission.
+        default: op
+    skycombatlog.commands.skycombatlog.reload:
+        description: The permission to use the reload command.
+        default: op
