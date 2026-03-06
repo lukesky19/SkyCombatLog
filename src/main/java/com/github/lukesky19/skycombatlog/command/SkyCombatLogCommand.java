@@ -1,6 +1,6 @@
 /*
     SkyCombatLog tracks players in combat, kills them if they disconnect in combat, and prevents plugins teleporting players in combat.
-    Copyright (C) 2025  lukeskywlker19
+    Copyright (C) 2025 lukeskywlker19
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published
@@ -20,11 +20,13 @@ package com.github.lukesky19.skycombatlog.command;
 import com.github.lukesky19.skycombatlog.SkyCombatLog;
 import com.github.lukesky19.skycombatlog.configuration.manager.LocaleManager;
 import com.github.lukesky19.skycombatlog.configuration.record.Locale;
-import com.github.lukesky19.skylib.format.FormatUtil;
+import com.github.lukesky19.skylib.api.adventure.AdventureUtil;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 /**
  * This class handles the creation of the SkyCombatLog command.
@@ -54,11 +56,16 @@ public class SkyCombatLogCommand {
         builder.then(Commands.literal("reload")
             .requires(ctx -> ctx.getSender().hasPermission("skycombatlog.commands.skycombatlog.reload"))
             .executes(ctx -> {
-                Locale locale = localeManager.getLocale();
+                Locale locale = localeManager.getConfiguration();
 
                 skyCombatLog.reload();
 
-                ctx.getSource().getSender().sendMessage(FormatUtil.format(locale.prefix() + locale.reload()));
+                CommandSender sender = ctx.getSource().getSender();
+                if(sender instanceof Player) {
+                    sender.sendMessage(AdventureUtil.deserialize(locale.prefix() + locale.reload()));
+                } else {
+                    sender.sendMessage(AdventureUtil.deserialize(locale.reload()));
+                }
 
                 return 1;
             })

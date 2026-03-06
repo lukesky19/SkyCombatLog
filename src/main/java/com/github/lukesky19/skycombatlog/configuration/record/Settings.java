@@ -1,6 +1,6 @@
 /*
     SkyCombatLog tracks players in combat, kills them if they disconnect in combat, and prevents plugins teleporting players in combat.
-    Copyright (C) 2025  lukeskywlker19
+    Copyright (C) 2025 lukeskywlker19
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published
@@ -18,14 +18,16 @@
 package com.github.lukesky19.skycombatlog.configuration.record;
 
 import com.github.lukesky19.skylib.libs.configurate.objectmapping.ConfigSerializable;
-
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Plugin settings
- * @param configVersion The file's config version
+ * @param version The file's config version
  * @param locale The locale to use
  * @param combatTime The combat time to apply to players in combat.
  */
 @ConfigSerializable
-public record Settings(@Nullable String configVersion, @Nullable String locale, int combatTime) {}
+public record Settings(
+        int version,
+        @Nullable String locale,
+        int combatTime) {}

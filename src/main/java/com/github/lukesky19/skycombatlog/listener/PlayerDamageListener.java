@@ -1,6 +1,6 @@
 /*
     SkyCombatLog tracks players in combat, kills them if they disconnect in combat, and prevents plugins teleporting players in combat.
-    Copyright (C) 2025  lukeskywlker19
+    Copyright (C) 2025 lukeskywlker19
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published
@@ -44,7 +44,8 @@ public class PlayerDamageListener implements Listener {
      */
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerDamage(EntityDamageByEntityEvent entityDamageByEntityEvent) {
-        if(entityDamageByEntityEvent.getEntity() instanceof Player targetPlayer && entityDamageByEntityEvent.getDamageSource().getCausingEntity() instanceof Player sourcePlayer) {
+        if(entityDamageByEntityEvent.getEntity() instanceof Player targetPlayer
+                && entityDamageByEntityEvent.getDamageSource().getCausingEntity() instanceof Player sourcePlayer) {
             combatManager.addPlayerInCombat(sourcePlayer, sourcePlayer.getUniqueId());
             combatManager.addPlayerInCombat(targetPlayer, targetPlayer.getUniqueId());
         }

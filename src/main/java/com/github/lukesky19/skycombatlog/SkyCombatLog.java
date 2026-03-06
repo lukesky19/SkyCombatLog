@@ -1,6 +1,6 @@
 /*
     SkyCombatLog tracks players in combat, kills them if they disconnect in combat, and prevents plugins teleporting players in combat.
-    Copyright (C) 2025  lukeskywlker19
+    Copyright (C) 2025 lukeskywlker19
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published
@@ -20,34 +20,43 @@ package com.github.lukesky19.skycombatlog;
 import com.github.lukesky19.skycombatlog.command.SkyCombatLogCommand;
 import com.github.lukesky19.skycombatlog.configuration.manager.LocaleManager;
 import com.github.lukesky19.skycombatlog.configuration.manager.SettingsManager;
-import com.github.lukesky19.skycombatlog.listener.PlayerDamageListener;
-import com.github.lukesky19.skycombatlog.listener.PlayerDeathListener;
-import com.github.lukesky19.skycombatlog.listener.PlayerQuitListener;
-import com.github.lukesky19.skycombatlog.listener.PlayerTeleportListener;
+import com.github.lukesky19.skycombatlog.integration.HookManager;
+import com.github.lukesky19.skycombatlog.integration.hooks.SkyFlightHook;
+import com.github.lukesky19.skycombatlog.listener.*;
 import com.github.lukesky19.skycombatlog.manager.CombatManager;
+import com.github.lukesky19.skylib.api.adventure.AdventureUtil;
+import com.github.lukesky19.skylib.api.common.abstracts.SkyPlugin;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
 
 /**
  * The main plugin class
  */
-public final class SkyCombatLog extends JavaPlugin {
+public final class SkyCombatLog extends SkyPlugin {
     private SettingsManager settingsManager;
     private LocaleManager localeManager;
     private CombatManager combatManager;
+
+    /**
+     * Constructor
+     */
+    public SkyCombatLog() {}
 
     /**
      * The method ran on plugin startup.
      */
     @Override
     public void onEnable() {
+        if(!checkSkyLibVersion()) return;
+
         // Classes
         settingsManager = new SettingsManager(this);
         localeManager = new LocaleManager(this, settingsManager);
-        combatManager = new CombatManager(this, settingsManager, localeManager);
+        HookManager hookManager = new HookManager(this);
+        combatManager = new CombatManager(this, settingsManager, localeManager, hookManager);
 
         // Register plugin command
         SkyCombatLogCommand skyMinesCommand = new SkyCombatLogCommand(this, localeManager);
@@ -65,6 +74,13 @@ public final class SkyCombatLog extends JavaPlugin {
         pm.registerEvents(new PlayerDamageListener(combatManager), this);
         pm.registerEvents(new PlayerDeathListener(combatManager), this);
 
+        SkyFlightHook skyFlightHook = hookManager.getHook(SkyFlightHook.class);
+        if(skyFlightHook.isHooked()) {
+            pm.registerEvents(new FlightEnableListener(localeManager, combatManager), this);
+        } else {
+            pm.registerEvents(new PlayerToggleFlightListener(localeManager, combatManager), this);
+        }
+
         reload();
     }
 
@@ -79,8 +95,31 @@ public final class SkyCombatLog extends JavaPlugin {
     /**
      * Reloads all plugin data.
      */
+    @Override
     public void reload() {
-        settingsManager.reload();
-        localeManager.reload();
+        settingsManager.loadConfiguration();
+        localeManager.loadConfiguration();
+    }
+
+    /**
+     * Checks if the Server has the proper SkyLib version.
+     * @return true if it does, false if not.
+     */
+    private boolean checkSkyLibVersion() {
+        PluginManager pluginManager = this.getServer().getPluginManager();
+        Plugin skyLib = pluginManager.getPlugin("SkyLib");
+        if(skyLib != null && skyLib.isEnabled()) {
+            String version = skyLib.getPluginMeta().getVersion();
+            String[] splitVersion = version.split("\\.");
+            int second = Integer.parseInt(splitVersion[1]);
+
+            if(second >= 5) {
+                return true;
+            }
+        }
+
+        this.getComponentLogger().error(AdventureUtil.deserialize("SkyLib Version 1.5.0.0 or newer is required to run this plugin."));
+        this.getServer().getPluginManager().disablePlugin(this);
+        return false;
     }
 }

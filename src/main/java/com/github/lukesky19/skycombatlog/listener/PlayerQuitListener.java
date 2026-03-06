@@ -1,6 +1,6 @@
 /*
     SkyCombatLog tracks players in combat, kills them if they disconnect in combat, and prevents plugins teleporting players in combat.
-    Copyright (C) 2025  lukeskywlker19
+    Copyright (C) 2025 lukeskywlker19
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published
@@ -21,7 +21,7 @@ import com.github.lukesky19.skycombatlog.SkyCombatLog;
 import com.github.lukesky19.skycombatlog.configuration.manager.LocaleManager;
 import com.github.lukesky19.skycombatlog.configuration.record.Locale;
 import com.github.lukesky19.skycombatlog.manager.CombatManager;
-import com.github.lukesky19.skylib.format.FormatUtil;
+import com.github.lukesky19.skylib.api.adventure.AdventureUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
@@ -30,7 +30,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.UUID;
@@ -61,7 +60,7 @@ public class PlayerQuitListener implements Listener {
      */
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent playerQuitEvent) {
-        @NotNull Locale locale = localeManager.getLocale();
+        Locale locale = localeManager.getConfiguration();
         Player player = playerQuitEvent.getPlayer();
         UUID uuid = player.getUniqueId();
 
@@ -73,7 +72,7 @@ public class PlayerQuitListener implements Listener {
             player.setHealth(0);
 
             List<TagResolver.Single> placeholders = List.of(Placeholder.parsed("player_name", player.getName()));
-            Component message = FormatUtil.format(locale.prefix() + locale.playerCombatLogged(), placeholders);
+            Component message = AdventureUtil.deserialize(locale.prefix() + locale.playerCombatLogged(), placeholders);
             for(Player p : skyCombatLog.getServer().getOnlinePlayers()) {
                 p.sendMessage(message);
             }

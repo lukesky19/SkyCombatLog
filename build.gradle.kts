@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "com.github.lukesky19"
-version = "1.0.0.0"
+version = "1.1.0.0"
 
 repositories {
     mavenCentral()
@@ -13,25 +13,44 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
-    compileOnly("com.github.lukesky19:SkyLib:1.2.0.0")
+    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    compileOnly("com.github.lukesky19:SkyLib:1.5.0.0")
+    compileOnly("com.github.lukesky19:SkyFlight:0.2.0.0")
 }
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 }
 
-tasks.withType<ProcessResources> {
-    val props = mapOf("version" to version)
-
-    filesMatching("plugin.yml") {
-        expand(props)
+tasks {
+    processResources {
+        val props = mapOf("version" to version)
+        inputs.properties(props)
+        filteringCharset = "UTF-8"
+        filesMatching("plugin.yml") {
+            expand(props)
+        }
     }
-}
 
-tasks.jar {
-    manifest {
-        attributes["paperweight-mappings-namespace"] = "mojang"
+    javadoc {
+        source = sourceSets["main"].allJava
+        classpath = files() + configurations["compileClasspath"]
+
+        (options as StandardJavadocDocletOptions).apply {
+            tags("apiNote:a:API Note:")
+            addStringOption("sourcepath", "")
+        }
     }
-    archiveClassifier.set("")
+
+    jar {
+        manifest {
+            attributes["paperweight-mappings-namespace"] = "mojang"
+        }
+
+        archiveClassifier.set("")
+    }
+
+    build {
+        dependsOn(javadoc)
+    }
 }

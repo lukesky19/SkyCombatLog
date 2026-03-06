@@ -1,6 +1,6 @@
 /*
     SkyCombatLog tracks players in combat, kills them if they disconnect in combat, and prevents plugins teleporting players in combat.
-    Copyright (C) 2025  lukeskywlker19
+    Copyright (C) 2025 lukeskywlker19
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published
@@ -20,16 +20,15 @@ package com.github.lukesky19.skycombatlog.configuration.manager;
 import com.github.lukesky19.skycombatlog.SkyCombatLog;
 import com.github.lukesky19.skycombatlog.configuration.record.Locale;
 import com.github.lukesky19.skycombatlog.configuration.record.Settings;
-import com.github.lukesky19.skylib.config.ConfigurationUtility;
-import com.github.lukesky19.skylib.format.FormatUtil;
-import com.github.lukesky19.skylib.libs.configurate.ConfigurateException;
-import com.github.lukesky19.skylib.libs.configurate.yaml.YamlConfigurationLoader;
-import com.github.lukesky19.skylib.record.Time;
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
+import com.github.lukesky19.skylib.api.adventure.AdventureUtil;
+import com.github.lukesky19.skylib.api.common.abstracts.config.SimpleConfigManager;
+import com.github.lukesky19.skylib.api.time.Time;
+import com.github.lukesky19.skylib.api.time.TimeUtil;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -38,17 +37,18 @@ import java.util.List;
 /**
  * This class loads the plugin's locale configuration.
  */
-public class LocaleManager {
-    private final SkyCombatLog skyCombatLog;
-    private final SettingsManager settingsManager;
-    private final Locale DEFAULT_LOCALE = new Locale(
-            "1.0.0.0",
+public class LocaleManager extends SimpleConfigManager<Locale> {
+    private final @NonNull SettingsManager settingsManager;
+    private final @NonNull Locale DEFAULT_LOCALE = new Locale(
+            1,
             "<red><bold>SkyCombatLog</bold></red><gray> ▪ </gray>",
             "<green>The plugin has reloaded successfully.</green>",
             "<red>You are now in combat! You will be unable to teleport and will be killed if you log out.",
             "<green>You are no longer in combat.</green>",
             "<dark_red>Player <aqua><player_name></aqua> logged out in combat and was killed!</dark_red>",
             "<dark_red>You cannot teleport while in combat.</dark_red>",
+            "<dark_red>Flight disabled because you entered combat.</dark_red>",
+            "<dark_red>Flight is not allowed while in combat.</dark_red>",
             "<yellow>Combat Timer: <white><time></white></yellow>",
             new Locale.TimeMessage(
                     "",
@@ -60,17 +60,16 @@ public class LocaleManager {
                     "<aqua><minutes></aqua> minute(s)",
                     "<aqua><seconds></aqua> second(s)",
                     "."));
-    private Locale locale;
 
     /**
      * Constructor
-     * @param skyCombatLog The SkyCombatLog plugin.
-     * @param settingsManager A SettingsManager instance.
+     * @param skyCombatLog A {@link SkyCombatLog} instance.
+     * @param settingsManager A {@link SettingsManager} instance.
      */
     public LocaleManager(
-            SkyCombatLog skyCombatLog,
-            SettingsManager settingsManager)  {
-        this.skyCombatLog = skyCombatLog;
+            @NonNull SkyCombatLog skyCombatLog,
+            @NonNull SettingsManager settingsManager)  {
+        super(skyCombatLog, Locale.class);
         this.settingsManager = settingsManager;
     }
 
@@ -78,70 +77,82 @@ public class LocaleManager {
      * Gets the plugin's locale if not null or the default locale otherwise.
      * @return The plugin's locale if not null or the default locale otherwise.
      */
-    @NotNull
-    public Locale getLocale() {
-        if(locale == null) return DEFAULT_LOCALE;
-        return locale;
+    @Override
+    public @NonNull Locale getConfiguration() {
+        if(configuration == null) return DEFAULT_LOCALE;
+        return configuration;
     }
 
-    /**
-     * Reloads the plugin's locale.
-     */
-    public void reload() {
-        ComponentLogger logger = skyCombatLog.getComponentLogger();
-        locale = null;
-
-        copyDefaultLocales();
-
-        Settings settings = settingsManager.getSettings();
+    @Override
+    public void loadConfiguration() {
+        Settings settings = settingsManager.getConfiguration();
         if(settings == null) {
-            logger.error(FormatUtil.format("<red>Failed to load plugin's locale due to plugin settings being null.</red>"));
+            logger.error(AdventureUtil.deserialize("<red>Failed to load plugin's locale due to plugin settings being null.</red>"));
             return;
         }
         if(settings.locale() == null) {
-            logger.error(FormatUtil.format("<red>Failed to load plugin's locale to use in settings.yml is null.</red>"));
+            logger.error(AdventureUtil.deserialize("<red>Failed to load plugin's locale to use in settings.yml is null.</red>"));
             return;
         }
 
         String localeString = settings.locale();
-        Path path = Path.of(skyCombatLog.getDataFolder() + File.separator + "locale" + File.separator + (localeString + ".yml"));
+        Path path = Path.of(plugin.getDataFolder() + File.separator + "locale" + File.separator + (localeString + ".yml"));
+        setConfigurationPath(path);
 
-        YamlConfigurationLoader loader = ConfigurationUtility.getYamlConfigurationLoader(path);
-        try {
-            locale = loader.load().get(Locale.class);
-        } catch (ConfigurateException exception) {
-            throw new RuntimeException(exception);
-        }
-
-        validateLocale();
+        super.loadConfiguration();
     }
 
-    /**
-     * Copies the default locale files that come bundled with the plugin, if they do not exist at least.
-     */
-    private void copyDefaultLocales() {
-        Path path = Path.of(skyCombatLog.getDataFolder() + File.separator + "locale" + File.separator + "en_US.yml");
-        if (!path.toFile().exists()) {
-            skyCombatLog.saveResource("locale" + File.separator + "en_US.yml", false);
+    @Override
+    public void saveBundledConfig() {
+        Path path = Path.of(plugin.getDataFolder() + File.separator + "locale" + File.separator + "en_US.yml");
+        if(!path.toFile().exists()) {
+            plugin.saveResource("locale" + File.separator + "en_US.yml", false);
         }
     }
 
     /**
-     * Checks if the locale configuration has any null-values.
+     * Migrate the locale.
+     * @param locale The {@link Locale} to migrate.
+     * @return The migrated {@link Locale} or null if migration failed.
      */
-    private void validateLocale() {
-        if(locale == null) return;
-
-        if(locale.configVersion() == null
-                || locale.prefix() == null
-                || locale.reload() == null
-                || locale.playerCombatLogged() == null
-                || locale.teleportInCombat() == null) {
-            locale = null;
-
-            skyCombatLog.getComponentLogger().warn(FormatUtil.format("<yellow>One of the plugin's locale messages was null. Double-check your configuration."));
-            skyCombatLog.getComponentLogger().info(FormatUtil.format("<white>The plugin will use the default config until the issue is resolved.</white>"));
+    @Override
+    public @Nullable Locale migrateConfiguration(@NonNull Locale locale) {
+        if(locale.version() == 0) {
+            return new Locale(
+                    1,
+                    locale.prefix(),
+                    locale.reload(),
+                    locale.inCombat(),
+                    locale.combatEnded(),
+                    locale.playerCombatLogged(),
+                    locale.teleportInCombat(),
+                    locale.actionBar(),
+                    "<dark_red>Flight disabled because you entered combat.</dark_red>",
+                    "<dark_red>Flight is not allowed while in combat.</dark_red>",
+                    locale.timeMessage());
         }
+
+        return locale;
+    }
+
+    /**
+     * Validates if the locale is missing any strings.
+     */
+    @Override
+    public boolean validateConfiguration(@Nullable Locale configuration) {
+        if(configuration == null) return false;
+
+        if(configuration.prefix() == null
+                || configuration.reload() == null
+                || configuration.playerCombatLogged() == null
+                || configuration.teleportInCombat() == null) {
+            logger.error(AdventureUtil.deserialize("Your locale is missing one of the plugin's messages. The default locale will be used."));
+            logger.info(AdventureUtil.deserialize("You can regenerate your locale file by deleting it or adding the missing messages to resolve the issue."));
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -149,10 +160,9 @@ public class LocaleManager {
      * @param time The time in seconds.
      * @return A String containing the time message.
      */
-    @NotNull
-    public String getTimeMessage(int time) {
-        Locale locale = this.getLocale();
-        Time timeRecord = FormatUtil.millisToTime(time * 1000L);
+    public @NonNull String getTimeMessage(int time) {
+        Locale locale = this.getConfiguration();
+        Time timeRecord = TimeUtil.millisToTime(time * 1000L);
 
         List<TagResolver.Single> placeholders = List.of(
                 Placeholder.parsed("years", String.valueOf(timeRecord.years())),
@@ -165,7 +175,7 @@ public class LocaleManager {
 
         StringBuilder stringBuilder = getStringBuilder(locale, timeRecord);
 
-        return MiniMessage.miniMessage().serialize(FormatUtil.format(stringBuilder.toString(), placeholders));
+        return MiniMessage.miniMessage().serialize(AdventureUtil.deserialize(stringBuilder.toString(), placeholders));
     }
 
     /**
@@ -174,7 +184,7 @@ public class LocaleManager {
      * @param timeRecord The record containing the individual time units to display.
      * @return A populated StringBuilder. May be empty if all time units were 0 and no suffix was configured.
      */
-    private @NotNull StringBuilder getStringBuilder(Locale locale, Time timeRecord) {
+    private @NonNull StringBuilder getStringBuilder(Locale locale, Time timeRecord) {
         Locale.TimeMessage timeMessage = locale.timeMessage();
         StringBuilder stringBuilder = new StringBuilder();
 

@@ -1,10 +1,12 @@
-config-version: "1.0.0.0"
+version: 1
 prefix: "<red><bold>SkyCombatLog</bold></red><gray> ▪ </gray>"
 reload: "<green>The plugin has reloaded successfully.</green>"
 in-combat: "<red>You are now in combat! You will be unable to teleport and will be killed if you log out.</red>"
 combat-ended: "<green>You are no longer in combat.</green>"
 player-combat-logged: "<dark_red>Player <aqua><player_name></aqua> logged out in combat and was killed!</dark_red>"
 teleport-in-combat: "<dark_red>You cannot teleport while in combat.</dark_red>"
+flight-disabled: "<dark_red>Flight disabled because you entered combat.</dark_red>"
+flight-not-allowed: "<dark_red>Flight is not allowed while in combat.</dark_red>"
 action-bar: "<yellow>Combat Timer: <white><time></white></yellow>"
 time-message:
     prefix: ""

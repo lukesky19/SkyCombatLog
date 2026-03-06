@@ -1,6 +1,6 @@
 /*
     SkyCombatLog tracks players in combat, kills them if they disconnect in combat, and prevents plugins teleporting players in combat.
-    Copyright (C) 2025  lukeskywlker19
+    Copyright (C) 2025 lukeskywlker19
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published
@@ -22,14 +22,17 @@ import com.github.lukesky19.skycombatlog.configuration.manager.LocaleManager;
 import com.github.lukesky19.skycombatlog.configuration.manager.SettingsManager;
 import com.github.lukesky19.skycombatlog.configuration.record.Locale;
 import com.github.lukesky19.skycombatlog.configuration.record.Settings;
-import com.github.lukesky19.skylib.format.FormatUtil;
+import com.github.lukesky19.skycombatlog.integration.HookManager;
+import com.github.lukesky19.skycombatlog.integration.hooks.SkyFlightHook;
+import com.github.lukesky19.skylib.api.adventure.AdventureUtil;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -37,41 +40,70 @@ import java.util.*;
  * Manages when a player is in combat.
  */
 public class CombatManager {
-    private final SkyCombatLog skyCombatLog;
-    private final SettingsManager settingsManager;
-    private final LocaleManager localeManager;
+    private final @NonNull SkyCombatLog skyCombatLog;
+    private final @NonNull ComponentLogger logger;
+    private final @NonNull SettingsManager settingsManager;
+    private final @NonNull LocaleManager localeManager;
+    private final @NonNull HookManager hookManager;
 
-    private final HashMap<UUID, Integer> playersInCombat = new HashMap<>();
-    private final List<UUID> killedPlayers = new ArrayList<>();
-    private BukkitTask timerTask;
+    private final @NonNull Map<UUID, Integer> playersInCombat = new HashMap<>();
+    private final @NonNull List<UUID> killedPlayers = new ArrayList<>();
+    private @Nullable BukkitTask timerTask;
 
     /**
      * Constructor
-     * @param skyCombatLog The SkyCombatLog plugin
-     * @param settingsManager A SettingsManager instance
-     * @param localeManager A LocaleManager instance
+     * @param skyCombatLog A {@link SkyCombatLog} instance.
+     * @param settingsManager A {@link SettingsManager} instance.
+     * @param localeManager A {@link LocaleManager} instance.
+     * @param hookManager A {@link HookManager} instance.
      */
-    public CombatManager(SkyCombatLog skyCombatLog, SettingsManager settingsManager, LocaleManager localeManager) {
+    public CombatManager(
+            @NonNull SkyCombatLog skyCombatLog,
+            @NonNull SettingsManager settingsManager,
+            @NonNull LocaleManager localeManager,
+            @NonNull HookManager hookManager) {
         this.skyCombatLog = skyCombatLog;
+        this.logger = skyCombatLog.getComponentLogger();
         this.settingsManager = settingsManager;
         this.localeManager = localeManager;
+        this.hookManager = hookManager;
 
         startTimerTask();
     }
 
     /**
      * Marks a player as in combat and sends the action bar timer.
-     * @param player A Player
-     * @param uuid A Player's UUID
+     * @param player The {@link Player}.
+     * @param uuid The Player's {@link UUID}.
      */
-    public void addPlayerInCombat(@NotNull Player player, @NotNull UUID uuid) {
-        Settings settings = settingsManager.getSettings();
+    public void addPlayerInCombat(@NonNull Player player, @NonNull UUID uuid) {
+        Locale locale = localeManager.getConfiguration();
+        Settings settings = settingsManager.getConfiguration();
 
         if(settings != null) {
             playersInCombat.put(uuid, settings.combatTime());
             sendActionBar(player, uuid);
+
+            // Disable Flight if the player can fly
+            if(player.getAllowFlight()) {
+                SkyFlightHook skyFlightHook = hookManager.getHook(SkyFlightHook.class);
+                if(skyFlightHook.isHooked()) {
+                    boolean result = skyFlightHook.disableFlight(player);
+                    if(result) {
+                        player.sendMessage(AdventureUtil.deserialize(locale.prefix() + locale.flightDisabled()));
+                    } else {
+                        logger.warn(AdventureUtil.deserialize("Failed to disable flight from SkyFlight when the player " + player.getName() + " was placed into combat."));
+                    }
+                } else {
+                    player.setAllowFlight(false);
+                    player.setFlying(false);
+                    player.setFallDistance(0);
+
+                    player.sendMessage(AdventureUtil.deserialize(locale.prefix() + locale.flightDisabled()));
+                }
+            }
         } else {
-            skyCombatLog.getComponentLogger().error("<red>Unable to put player into combat due to invalid plugin settings.</red>");
+            logger.error(AdventureUtil.deserialize("Unable to put player into combat due to invalid plugin settings."));
         }
     }
 
@@ -80,7 +112,7 @@ public class CombatManager {
      * @param player A Player
      * @param uuid A Player's UUID
      */
-    public void removePlayerInCombat(@NotNull Player player, @NotNull UUID uuid) {
+    public void removePlayerInCombat(@NonNull Player player, @NonNull UUID uuid) {
         playersInCombat.remove(uuid);
 
         if(player.isOnline() && player.isConnected()) {
@@ -93,7 +125,7 @@ public class CombatManager {
      * @param uuid The UUID of the player.
      * @return true if in combat, false if not.
      */
-    public boolean isPlayerInCombat(@NotNull UUID uuid) {
+    public boolean isPlayerInCombat(@NonNull UUID uuid) {
         return playersInCombat.containsKey(uuid);
     }
 
@@ -101,7 +133,7 @@ public class CombatManager {
      * Marks a player was killed for combat logging.
      * @param uuid The UUID of the player.
      */
-    public void addPlayerKilled(@NotNull UUID uuid) {
+    public void addPlayerKilled(@NonNull UUID uuid) {
         killedPlayers.add(uuid);
     }
 
@@ -109,7 +141,7 @@ public class CombatManager {
      * Removes a player that was marked as being killed for combat logging.
      * @param uuid The UUID of the player.
      */
-    public void removePlayerKilled(@NotNull UUID uuid) {
+    public void removePlayerKilled(@NonNull UUID uuid) {
         killedPlayers.remove(uuid);
     }
 
@@ -118,7 +150,7 @@ public class CombatManager {
      * @param uuid The UUID of the player.
      * @return true if the player was killed, false if not.
      */
-    public boolean wasPlayerKilled(@NotNull UUID uuid) {
+    public boolean wasPlayerKilled(@NonNull UUID uuid) {
         return killedPlayers.contains(uuid);
     }
 
@@ -127,8 +159,7 @@ public class CombatManager {
      * @param uuid The UUID of the player.
      * @return An integer of their combat time or null if not in combat.
      */
-    @Nullable
-    public Integer getPlayerCombatTimer(@NotNull UUID uuid) {
+    public @Nullable Integer getPlayerCombatTimer(@NonNull UUID uuid) {
         return playersInCombat.get(uuid);
     }
 
@@ -137,13 +168,13 @@ public class CombatManager {
      * @param player The Player
      * @param uuid The Player's UUID
      */
-    private void sendActionBar(@NotNull Player player, @NotNull UUID uuid) {
-        @NotNull Locale locale = localeManager.getLocale();
+    private void sendActionBar(@NonNull Player player, @NonNull UUID uuid) {
+        Locale locale = localeManager.getConfiguration();
         int time = playersInCombat.get(uuid);
         String timeMessage = localeManager.getTimeMessage(time);
         List<TagResolver.Single> placeholders = List.of(Placeholder.parsed("time", timeMessage));
 
-        Component actionBar = FormatUtil.format(locale.actionBar(), placeholders);
+        Component actionBar = AdventureUtil.deserialize(locale.actionBar(), placeholders);
         player.sendActionBar(actionBar);
     }
 
@@ -151,8 +182,8 @@ public class CombatManager {
      * Clears the player's action bar with their combat timer
      * @param player The Player
      */
-    private void removeActionBar(@NotNull Player player) {
-        Component actionBar = FormatUtil.format("");
+    private void removeActionBar(@NonNull Player player) {
+        Component actionBar = AdventureUtil.deserialize("");
         player.sendActionBar(actionBar);
     }
 

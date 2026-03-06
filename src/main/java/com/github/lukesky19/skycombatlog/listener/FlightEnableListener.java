@@ -17,6 +17,7 @@
 */
 package com.github.lukesky19.skycombatlog.listener;
 
+import com.github.lukesky19.skyFlight.api.event.FlightEnableEvent;
 import com.github.lukesky19.skycombatlog.configuration.manager.LocaleManager;
 import com.github.lukesky19.skycombatlog.configuration.record.Locale;
 import com.github.lukesky19.skycombatlog.manager.CombatManager;
@@ -25,46 +26,40 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerTeleportEvent;
-
-import java.util.UUID;
+import org.jspecify.annotations.NonNull;
 
 /**
- * This class listens to when a player teleports and if they are in combat cancels it.
+ * Listens for when a player toggles their flight through SkyFlight and prevents flying if in combat.
  */
-public class PlayerTeleportListener implements Listener {
-    private final LocaleManager localeManager;
-    private final CombatManager combatManager;
+public class FlightEnableListener implements Listener {
+    private final @NonNull LocaleManager localeManager;
+    private final @NonNull CombatManager combatManager;
 
     /**
      * Constructor
-     * @param localeManager A LocaleManager instance.
-     * @param combatManager A CombatManager instance.
+     * @param localeManager A {@link LocaleManager} instance.
+     * @param combatManager A {@link CombatManager} instance.
      */
-    public PlayerTeleportListener(LocaleManager localeManager, CombatManager combatManager) {
+    public FlightEnableListener(
+            @NonNull LocaleManager localeManager,
+            @NonNull CombatManager combatManager) {
         this.localeManager = localeManager;
         this.combatManager = combatManager;
     }
 
     /**
-     * Listens to when a player teleports and cancels it if they are in combat.
-     * @param playerTeleportEvent A PlayerTeleportEvent
+     * Listens for when a player toggles their flight through SkyFlight and prevents flying if in combat.
+     * @param flightEnableEvent A {@link FlightEnableEvent}.
      */
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
-    public void onTeleport(PlayerTeleportEvent playerTeleportEvent) {
-        Player player = playerTeleportEvent.getPlayer();
-        UUID uuid = player.getUniqueId();
+    public void onFlightEnable(@NonNull FlightEnableEvent flightEnableEvent) {
+        Player player = flightEnableEvent.getPlayer();
 
-        if(playerTeleportEvent.getCause().equals(PlayerTeleportEvent.TeleportCause.COMMAND)
-                || playerTeleportEvent.getCause().equals(PlayerTeleportEvent.TeleportCause.PLUGIN)
-                || playerTeleportEvent.getCause().equals(PlayerTeleportEvent.TeleportCause.UNKNOWN)) {
-            if(combatManager.isPlayerInCombat(uuid)) {
-                Locale locale = localeManager.getConfiguration();
+        if(combatManager.isPlayerInCombat(player.getUniqueId())) {
+            flightEnableEvent.setCancelled(true);
 
-                playerTeleportEvent.setCancelled(true);
-
-                player.sendMessage(AdventureUtil.deserialize(locale.prefix() + locale.teleportInCombat()));
-            }
+            Locale locale = localeManager.getConfiguration();
+            player.sendMessage(AdventureUtil.deserialize(locale.prefix() + locale.flightNotAllowed()));
         }
     }
 }
