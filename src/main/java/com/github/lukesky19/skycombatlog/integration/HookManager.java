@@ -17,9 +17,9 @@
 */
 package com.github.lukesky19.skycombatlog.integration;
 
+import com.github.lukesky19.skycombatlog.SkyCombatLog;
 import com.github.lukesky19.skycombatlog.integration.hooks.SkyFlightHook;
-import com.github.lukesky19.skylib.api.common.abstracts.SkyPlugin;
-import com.github.lukesky19.skylib.api.integration.Hook;
+import com.github.lukesky19.skylib.common.api.integration.Hook;
 import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
@@ -33,9 +33,9 @@ public class HookManager {
 
     /**
      * Constructor
-     * @param plugin A {@link SkyPlugin} instance.
+     * @param plugin A {@link SkyCombatLog} instance.
      */
-    public HookManager(@NonNull SkyPlugin plugin) {
+    public HookManager(@NonNull SkyCombatLog plugin) {
         registerHook(SkyFlightHook.class, new SkyFlightHook(plugin));
     }
 

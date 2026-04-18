@@ -21,7 +21,7 @@ import com.github.lukesky19.skycombatlog.SkyCombatLog;
 import com.github.lukesky19.skycombatlog.configuration.manager.LocaleManager;
 import com.github.lukesky19.skycombatlog.configuration.record.Locale;
 import com.github.lukesky19.skycombatlog.manager.CombatManager;
-import com.github.lukesky19.skylib.api.adventure.AdventureUtil;
+import com.github.lukesky19.skylib.common.api.adventure.AdventureUtility;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
@@ -72,7 +72,7 @@ public class PlayerQuitListener implements Listener {
             player.setHealth(0);
 
             List<TagResolver.Single> placeholders = List.of(Placeholder.parsed("player_name", player.getName()));
-            Component message = AdventureUtil.deserialize(locale.prefix() + locale.playerCombatLogged(), placeholders);
+            Component message = AdventureUtility.deserialize(locale.prefix() + locale.playerCombatLogged(), placeholders);
             for(Player p : skyCombatLog.getServer().getOnlinePlayers()) {
                 p.sendMessage(message);
             }

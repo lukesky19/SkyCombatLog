@@ -20,7 +20,7 @@ package com.github.lukesky19.skycombatlog.command;
 import com.github.lukesky19.skycombatlog.SkyCombatLog;
 import com.github.lukesky19.skycombatlog.configuration.manager.LocaleManager;
 import com.github.lukesky19.skycombatlog.configuration.record.Locale;
-import com.github.lukesky19.skylib.api.adventure.AdventureUtil;
+import com.github.lukesky19.skylib.common.api.adventure.AdventureUtility;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -62,9 +62,9 @@ public class SkyCombatLogCommand {
 
                 CommandSender sender = ctx.getSource().getSender();
                 if(sender instanceof Player) {
-                    sender.sendMessage(AdventureUtil.deserialize(locale.prefix() + locale.reload()));
+                    sender.sendMessage(AdventureUtility.deserialize(locale.prefix() + locale.reload()));
                 } else {
-                    sender.sendMessage(AdventureUtil.deserialize(locale.reload()));
+                    sender.sendMessage(AdventureUtility.deserialize(locale.reload()));
                 }
 
                 return 1;

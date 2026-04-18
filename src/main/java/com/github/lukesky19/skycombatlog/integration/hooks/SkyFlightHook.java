@@ -18,8 +18,8 @@
 package com.github.lukesky19.skycombatlog.integration.hooks;
 
 import com.github.lukesky19.skyFlight.api.SkyFlightAPI;
-import com.github.lukesky19.skylib.api.common.abstracts.SkyPlugin;
-import com.github.lukesky19.skylib.api.integration.Hook;
+import com.github.lukesky19.skycombatlog.SkyCombatLog;
+import com.github.lukesky19.skylib.common.api.integration.Hook;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -30,14 +30,14 @@ import org.jspecify.annotations.Nullable;
  * This class manages interfacing with the SkyFlight plugin.
  */
 public class SkyFlightHook implements Hook {
-    private final @NonNull SkyPlugin plugin;
+    private final @NonNull SkyCombatLog plugin;
     private @Nullable SkyFlightAPI skyFlightAPI;
 
     /**
      * Constructor
-     * @param plugin A {@link SkyPlugin} instance.
+     * @param plugin A {@link SkyCombatLog} instance.
      */
-    public SkyFlightHook(@NonNull SkyPlugin plugin) {
+    public SkyFlightHook(@NonNull SkyCombatLog plugin) {
         this.plugin = plugin;
     }
 

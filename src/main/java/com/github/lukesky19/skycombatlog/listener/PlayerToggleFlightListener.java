@@ -3,7 +3,7 @@ package com.github.lukesky19.skycombatlog.listener;
 import com.github.lukesky19.skycombatlog.configuration.manager.LocaleManager;
 import com.github.lukesky19.skycombatlog.configuration.record.Locale;
 import com.github.lukesky19.skycombatlog.manager.CombatManager;
-import com.github.lukesky19.skylib.api.adventure.AdventureUtil;
+import com.github.lukesky19.skylib.common.api.adventure.AdventureUtility;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -46,7 +46,7 @@ public class PlayerToggleFlightListener implements Listener {
             player.setFallDistance(0);
 
             Locale locale = localeManager.getConfiguration();
-            player.sendMessage(AdventureUtil.deserialize(locale.prefix() + locale.flightNotAllowed()));
+            player.sendMessage(AdventureUtility.deserialize(locale.prefix() + locale.flightNotAllowed()));
         }
     }
 }

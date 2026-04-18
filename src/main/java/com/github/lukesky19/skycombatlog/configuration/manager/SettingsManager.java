@@ -19,7 +19,7 @@ package com.github.lukesky19.skycombatlog.configuration.manager;
 
 import com.github.lukesky19.skycombatlog.SkyCombatLog;
 import com.github.lukesky19.skycombatlog.configuration.record.Settings;
-import com.github.lukesky19.skylib.api.common.abstracts.config.SimpleConfigManager;
+import com.github.lukesky19.skylib.common.api.configuration.abstracts.SimpleConfigManager;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -39,7 +39,7 @@ public class SettingsManager extends SimpleConfigManager<Settings> {
     }
 
     @Override
-    public void saveBundledConfig() {
+    public void saveDefaultConfiguration() {
         plugin.saveResource("settings.yml", false);
     }
 

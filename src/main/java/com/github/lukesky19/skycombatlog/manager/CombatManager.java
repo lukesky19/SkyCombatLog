@@ -24,7 +24,7 @@ import com.github.lukesky19.skycombatlog.configuration.record.Locale;
 import com.github.lukesky19.skycombatlog.configuration.record.Settings;
 import com.github.lukesky19.skycombatlog.integration.HookManager;
 import com.github.lukesky19.skycombatlog.integration.hooks.SkyFlightHook;
-import com.github.lukesky19.skylib.api.adventure.AdventureUtil;
+import com.github.lukesky19.skylib.common.api.adventure.AdventureUtility;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -90,20 +90,20 @@ public class CombatManager {
                 if(skyFlightHook.isHooked()) {
                     boolean result = skyFlightHook.disableFlight(player);
                     if(result) {
-                        player.sendMessage(AdventureUtil.deserialize(locale.prefix() + locale.flightDisabled()));
+                        player.sendMessage(AdventureUtility.deserialize(locale.prefix() + locale.flightDisabled()));
                     } else {
-                        logger.warn(AdventureUtil.deserialize("Failed to disable flight from SkyFlight when the player " + player.getName() + " was placed into combat."));
+                        logger.warn(AdventureUtility.plain("Failed to disable flight from SkyFlight when the player " + player.getName() + " was placed into combat."));
                     }
                 } else {
                     player.setAllowFlight(false);
                     player.setFlying(false);
                     player.setFallDistance(0);
 
-                    player.sendMessage(AdventureUtil.deserialize(locale.prefix() + locale.flightDisabled()));
+                    player.sendMessage(AdventureUtility.deserialize(locale.prefix() + locale.flightDisabled()));
                 }
             }
         } else {
-            logger.error(AdventureUtil.deserialize("Unable to put player into combat due to invalid plugin settings."));
+            logger.error(AdventureUtility.plain("Unable to put player into combat due to invalid plugin settings."));
         }
     }
 
@@ -174,7 +174,7 @@ public class CombatManager {
         String timeMessage = localeManager.getTimeMessage(time);
         List<TagResolver.Single> placeholders = List.of(Placeholder.parsed("time", timeMessage));
 
-        Component actionBar = AdventureUtil.deserialize(locale.actionBar(), placeholders);
+        Component actionBar = AdventureUtility.deserialize(locale.actionBar(), placeholders);
         player.sendActionBar(actionBar);
     }
 
@@ -183,7 +183,7 @@ public class CombatManager {
      * @param player The Player
      */
     private void removeActionBar(@NonNull Player player) {
-        Component actionBar = AdventureUtil.deserialize("");
+        Component actionBar = AdventureUtility.deserialize("");
         player.sendActionBar(actionBar);
     }
 
