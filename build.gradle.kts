@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "com.github.lukesky19"
-version = "1.2.0.0"
+version = "1.2.1.0"
 
 repositories {
     mavenCentral()
@@ -14,13 +14,13 @@ repositories {
 
 dependencies {
     // Paper
-    compileOnly("io.papermc.paper:paper-api:26.1.2.build.+")
+    compileOnly("io.papermc.paper:paper-api:26.2.build.+")
 
     // SkyLib
-    compileOnly("com.github.lukesky19:SkyLib:2.0.0.0")
+    compileOnly("com.github.lukesky19:SkyLib:2.0.2.0")
 
     // Integration
-    compileOnly("com.github.lukesky19:SkyFlight:0.2.0.0")
+    compileOnly("com.github.lukesky19:SkyFlight:0.3.0.0")
 }
 
 java {
